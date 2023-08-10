@@ -7,7 +7,7 @@ let users = [];
 
 //write code to check is the username is validconst validuser = users.filter((user) =>{
 
-/*const isValid = (username)=>{
+const isValid = (username)=>{
     let userwithsamename = users.filter((user)=>{
       return user.username === username
     });
@@ -16,15 +16,24 @@ let users = [];
     } else {
       return false;
     }
-}*/
-const isValid = (username)=>{ //returns boolean
+}
+/*const isValid = (username)=>{ //returns boolean
     for (var user in users) {
       if (user["username"]===username) {
           return true;
       }
   }
     return false;
-  }
+}
+/*const isValid = (username)=>{ //returns boolean
+    const usersLength = users.length;
+    for(let i = 0; i < usersLength; i++) {
+        if(users[i].username == username){
+            return false;
+        }
+    }
+    return true;
+}*/
 
 const authenticatedUser = (username,password)=>{
     let validUser = users.filter((user)=>{
@@ -45,16 +54,12 @@ regd_users.post("/login", (req, res) => {
     if (!username || !password) {
         return res.status(404).json({ message: "Error logging in" });
     }
-
     if (authenticatedUser(username, password)) {
         let accessToken = jwt.sign(
-            {
-                data: password,
-            },
+            {data: password,},
             "access",
             { expiresIn: 60 * 60 }
         );
-
         req.session.authorization = {
             accessToken,
             username,
@@ -83,7 +88,18 @@ regd_users.put("/auth/review/:isbn", (req, res) => {
         else{
             res.send("Unable to find this ISBN!");
         }
-      });
+});
+regd_users.delete("/auth/review/:isbn", (req, res) => {
+    const isbn = req.params.isbn;
+    let username = req.session.authorization['username'];
+    let filtered_book = books[isbn];
+
+    if (filtered_book) {
+        delete filtered_book.reviews[username];
+        return res.status(200).json("Review deleted.");
+    }
+    return res.status(404).json({ message: "Invalid ISBN" });
+});
 
 module.exports.authenticated = regd_users;
 module.exports.isValid = isValid;
